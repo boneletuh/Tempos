@@ -19,12 +19,8 @@ REG_SCREEN_CNTRL equ 0x3d4
 global REG_SCREEN_DATA
 REG_SCREEN_DATA equ 0x3d5
 
-; get symbols from ports
-extern port_byte_out
-extern port_byte_in
 ; get symbols from utils
 extern memory_copy
-extern waste_time
 
 global clear_screen
 ; 'cleans' all the characters in the screen
@@ -58,31 +54,29 @@ clear_screen:
 ; Params:
 ;  bx - the new offset of the cursor 
 set_cursor_offset:
-	push dx
 	push ax
 
 	shr bx, 1
-	; TODO: see if the bytes can be ported in pairs to optimize a little
-	mov dx, REG_SCREEN_CNTRL
+
 	mov al, 14
-	call port_byte_out
-
-	mov dx, REG_SCREEN_DATA
-	mov al, bh
-	call port_byte_out
-
 	mov dx, REG_SCREEN_CNTRL
-	mov al, 15
-	call port_byte_out
+	out dx, al
 
+	mov al, bh
 	mov dx, REG_SCREEN_DATA
+	out dx, al
+
+	mov al, 15
+	mov dx, REG_SCREEN_CNTRL
+	out dx, al
+
 	mov al, bl
-	call port_byte_out
+	mov dx, REG_SCREEN_DATA
+	out dx, al
 
 	shl bx, 1
 
 	pop ax
-	pop dx
 	ret
 
 ; get offset from column and row
@@ -153,20 +147,20 @@ get_offset_col:
 get_cursor_offset:
 	push dx
 	
-	mov dx, REG_SCREEN_CNTRL
 	mov al, 14
-	call port_byte_out
+	mov dx, REG_SCREEN_CNTRL
+	out dx, al
 
 	mov dx, REG_SCREEN_DATA
-	call port_byte_in
+	in al, dx
 	mov ah, al
 
-	mov dx, REG_SCREEN_CNTRL
 	mov al, 15
-	call port_byte_out
+	mov dx, REG_SCREEN_CNTRL
+	out dx, al
 
 	mov dx, REG_SCREEN_DATA
-	call port_byte_in
+	in al, dx
 
 	add ax, ax
 

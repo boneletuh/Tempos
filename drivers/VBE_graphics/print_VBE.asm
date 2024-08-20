@@ -1,10 +1,12 @@
 ; TODO: optimize the calling arguments of the functions and the `pushad` and `popad`
 bits 32
 
-extern bl_vbe_width, bl_vbe_height, bl_vbe_bpp, bl_vbe_addr
-extern null, font
 
+extern font
 extern char_width, char_height
+
+extern bl_vbe_width, bl_vbe_height, bl_vbe_bpp, bl_vbe_addr
+extern vbe_screen_sz
 
 extern memory_set, memory_copy
 
@@ -13,53 +15,15 @@ cursor: dd 0
 
 
 global VBE_roll_screen_up
-; rolls the screen up
-%if 1 ; FIX: this function
+; rolls the screen up by one pixel
+; TODO: optimize this loop (a lot)
 VBE_roll_screen_up:
 	pushad
+	; number of rows a character takes: (char_height+padding) * bl_vbe_width * bl_vbe_bpp/8
+	mov ebx, (16 + 4)*800*3 ; FIX:
 	; the index for the loop
-	movzx edx, WORD [bl_vbe_height]
+	mov edx, 16 + 4 ; skip the character line
 .VBE_roll_screen_up_loop:
-	; loop while the idx is less than height
-	cmp dx, 1 ; skip copying the first line
-	jbe .VBE_roll_screen_up_end
-	dec edx
-
-	; copy a line to the previous line to 'roll' it up
-	; line to copy
-	lea eax, [edx*3] ; FIX: get the value from bl_vbe_bpp
-	push edx
-	mul WORD [bl_vbe_width]
-	pop edx
-
-	add eax, DWORD [bl_vbe_addr]
-	mov esi, eax
-	; line to be copied to
-	sub eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
-	mov edi, eax
-	
-	; the number of bytes to copy
-	mov eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
-	call memory_copy
-
-	; next iteration
-	jmp .VBE_roll_screen_up_loop	
-.VBE_roll_screen_up_end:
-	mov eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
-	mov edi, DWORD [bl_vbe_addr]
-	add edi, 800*(600-1)*3  ; FIX: bl_vbe_width*(bl_vbe_height - 1)*bl_vbe_bpp/8 
-	mov dl, 0 ; set the pixels to black
-	call memory_set
-
-	popad
-	ret
-%else
-VBE_roll_screen_up:
-	pushad
-	; the index for the loop
-	mov edx, 1 ; skip copying the first line
-.VBE_roll_screen_up_loop:
-	; loop while the idx is less than height
 	cmp dx, WORD [bl_vbe_height]
 	jae .VBE_roll_screen_up_end
 
@@ -67,14 +31,15 @@ VBE_roll_screen_up:
 	; line to copy
 	lea eax, [edx*3] ; FIX: get the value from bl_vbe_bpp
 	push edx
-	mul WORD [bl_vbe_width]
+	movzx edx, WORD [bl_vbe_width]
+	mul edx
 	pop edx
 
 	add eax, DWORD [bl_vbe_addr]
 	mov esi, eax
 	; line to be copied to
-	sub eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
 	mov edi, eax
+	sub edi, ebx
 	
 	; the number of bytes to copy
 	mov eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
@@ -84,15 +49,17 @@ VBE_roll_screen_up:
 	inc edx
 	jmp .VBE_roll_screen_up_loop	
 .VBE_roll_screen_up_end:
-	mov eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
+	; set the bottom line of the screen to black
+	mov eax, ebx ; FIX: bl_vbe_width * bl_vbe_bpp/8
 	mov edi, DWORD [bl_vbe_addr]
-	add edi, 800*(600-1)*3  ; FIX: bl_vbe_width*(bl_vbe_height - 1)*bl_vbe_bpp/8 
-	mov dl, 0 ; set the pixels to black
+	;add edi, 800*(600-1)*3  ; FIX: bl_vbe_width*(bl_vbe_height -1)*bl_vbe_bpp/8
+	add edi, 800*(600-(16+4))*3  ; FIX: bl_vbe_width*(bl_vbe_height - (char_height+padding))*bl_vbe_bpp/8
+	mov dl, 0 ; color black
 	call memory_set
 
 	popad
 	ret
-%endif
+
 
 ; prints a new line / line feed
 ; Input:
@@ -107,8 +74,7 @@ VBE_print_new_line:
 	div edi
 	sub DWORD [cursor], edx
 
-	mov eax, edi
-	add DWORD [cursor], eax
+	add DWORD [cursor], edi
 
 	popad
 	ret
@@ -198,6 +164,22 @@ VBE_print_char:
 	call VBE_print_new_line
 
 .VBE_print_char_end:
+	mov eax, DWORD [cursor]
+	cmp eax, DWORD [vbe_screen_sz]
+	jb .VBE_print_char_not_roll
+
+	call VBE_roll_screen_up
+
+	; set the cursor to the beginning of the line
+	mov edx, 0
+	mov eax, DWORD [cursor]
+	mov ebx, 800*3 ; FIX: screen_width * bytes_per_pixel
+	div ebx
+	sub DWORD [cursor], edx
+	; set the cursor one character-line up
+	sub DWORD [cursor], 800*(16+4)*3 ; FIX: screen_width*(char_height+padding)*bytes_per_pixel
+
+.VBE_print_char_not_roll:
 	popad
 	ret
 
@@ -223,6 +205,5 @@ VBE_print:
 	; repeat
 	jmp .VBE_print_loop
 .VBE_print_end:
-	;mov DWORD [cursor], ebx
 	popad
 	ret

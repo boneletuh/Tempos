@@ -87,9 +87,11 @@ _start:
 	call init_VBE
 	call rand_colors
 
-	call VBE_roll_screen_up
-
-	mov eax, 30
+	;1 95,6 s
+	;2 50,9 s
+	;f 7 s
+	;n 4,6 s
+	mov eax, 1000
 .num_loop:
 	mov edi, num_str
 	call int_to_hex

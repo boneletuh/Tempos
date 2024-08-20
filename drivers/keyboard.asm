@@ -2,7 +2,6 @@ bits 32
 
 extern register_interrupt_handler
 extern IRQ1
-extern port_byte_in
 extern kprint
 extern kprint_backspace
 extern keyboard_cmd
@@ -18,9 +17,7 @@ global keyboard_callback
 keyboard_callback:
 	push dx
 
-	mov dx, 0x60
-	call port_byte_in
-
+	in al, 0x60
 	call print_letter
 
 	pop dx
@@ -43,7 +40,8 @@ init_keyboard:
 %define BACKSPACE_SC 0xe
 %define NEWLINE_SC 0x1c
 ; prints a letter to the screen
-; al - the scancode
+; Input:
+;  al - the scancode
 print_letter:
 	pushad
 	; if the scancode is bigger than 57 dont do anything

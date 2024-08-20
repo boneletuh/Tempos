@@ -5,23 +5,23 @@ bits 16
 ; Params:
 ;  bx - pointer to the string
 putstr:
-    pusha
+	pusha
 .putstr_loop:
-    mov al, [bx]
-    ; check for null symbol
-    cmp al, 0
-    je .putstr_end
+	mov al, [bx]
+	; check for null symbol
+	cmp al, 0
+	je .putstr_end
 
-    ; print with the BIOS help
-    mov ah, 0x0e
-    int 0x10
+	; print with the BIOS help
+	mov ah, 0x0e
+	int 0x10
 
-    ; next iteration
-    inc bx
-    jmp .putstr_loop
+	; next iteration
+	inc bx
+	jmp .putstr_loop
 .putstr_end:
-    popa
-    ret
+	popa
+	ret
 
 ; prints a new line
 print_nl:
@@ -33,7 +33,7 @@ print_nl:
 
 ; prints a symbol
 ; Params:
-;  al - has the simbol to print
+;  al - has the symbol to print
 putchr:
 	mov ah, 0Eh
 	int 10h
@@ -81,5 +81,4 @@ end:
     popa
     ret
 
-HEX_OUT:
-    db '0x0000', 0 ; reserve memory for our new string
+HEX_OUT: db '0x0000', 0
