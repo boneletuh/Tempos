@@ -1,6 +1,5 @@
 bits 32
 
-extern port_byte_out
 extern kprint
 extern int_to_hex
 extern num_str
@@ -43,6 +42,7 @@ global registers_type
 registers_type: dq 0, 0, 0, 0, 0, 0, 0, 0 ; for moving memory around with the array
 
 global isr_install
+; Changes all the registers
 isr_install:
 	mov eax, 0
 	mov ebx, isr0
@@ -173,45 +173,35 @@ isr_install:
 	call set_idt_gate
 
 	; remap the PIC
-	mov dx, 0x20
 	mov al, 0x11
-	call port_byte_out
+	out 0x20, al
 
-	mov dx, 0xA0
 	mov al, 0x11
-	call port_byte_out
+	out 0xA0, al
 
-	mov dx, 0x21
 	mov al, 0x20
-	call port_byte_out
+	out 0x21, al
 
-	mov dx, 0xA1
 	mov al, 0x28
-	call port_byte_out
+	out 0xA1, al
 
-	mov dx, 0x21
 	mov al, 0x04
-	call port_byte_out
+	out 0x21, al
 
-	mov dx, 0xA1
 	mov al, 0x02
-	call port_byte_out
+	out 0xA1, al
 
-	mov dx, 0x21
 	mov al, 0x01
-	call port_byte_out
+	out 0x21, al
 
-	mov dx, 0xA1
 	mov al, 0x01
-	call port_byte_out
+	out 0xA1, al
 
-	mov dx, 0x21
 	mov al, 0x00
-	call port_byte_out
+	out 0x21, al
 
-	mov dx, 0xA1
 	mov al, 0x00
-	call port_byte_out
+	out 0xA1, al
 
 	; install the IRQs
 	mov eax, 32
@@ -371,13 +361,11 @@ irq_handler:
 	; send an EOI to the PICs
 	cmp DWORD [ecx + 36], 40
 	jb .port_byte_if
-	mov dx, 0xA0
 	mov al, 0x20
-	call port_byte_out ; slave
+	out 0xA0, al ; slave
 .port_byte_if:
-	mov dx, 0x20
 	mov al, 0x20
-	call port_byte_out ; master
+	out 0x20, al ; master
 
 	; if the interrupt code is 0 handle it
 	mov ecx, DWORD [ecx + 36]

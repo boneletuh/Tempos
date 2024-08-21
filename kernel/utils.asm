@@ -115,11 +115,12 @@ int_to_hex:
 	pop eax
 	ret
 
+%if 1
 global memory_set
 ; writes a value to a pointer 'n' times
 ; Params:
 ;  edi - the pointer where the value will be written
-;  eax - the amount of times the value will be copied
+;  eax - the amount of times the value will be written
 ;  dl - the byte to copy
 memory_set:
 	push ebx
@@ -140,7 +141,35 @@ memory_set:
 .memory_set_end:
 	pop ebx
 	ret
+%else
+global memory_set
+; writes a value to a pointer 'n' times
+; Params:
+;  edi - the pointer where the value will be written
+;  eax - the amount of times the value will be written
+;  dl - the byte to copy
+memory_set:
+	push ebx
 
+	; end the function if there is 0 bytes 
+	cmp eax, 0
+	je .memory_set_end
+	; this is the offset from the pointer
+	mov ebx, 0
+.memory_set_loop:
+	; write the byte to the pointer with offset
+	mov BYTE [edi + ebx], dl
+
+	; repeat the loop
+	inc ebx
+
+	; repeat the loop while the offset is below the 'n'
+	cmp ebx, eax
+	jb .memory_set_loop
+.memory_set_end:
+	pop ebx
+	ret
+%endif
 
 global strcmp
 ; TODO; rewrite this monstrousity

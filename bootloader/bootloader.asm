@@ -49,7 +49,7 @@ BEGIN_PM: ; after the switch we will get here
     call KERNEL_OFFSET ; give control to kernel
     jmp $ ; stay here when kernel returns control (if ever)
 
-; we store it in memory in case it gets overwritten
+; store the drive number
 BOOT_DRIVE db 0
 MSG_REAL_MODE db "Started in 16bit RM", 0
 MSG_PROT_MODE db "Loaded 32bit PM", 0

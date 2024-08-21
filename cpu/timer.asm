@@ -2,7 +2,6 @@ bits 32
 
 extern kprint
 extern int_to_hex
-extern port_byte_out
 extern register_interrupt_handler
 extern IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7, IRQ8, IRQ9, IRQ10, IRQ11, IRQ12, IRQ13, IRQ14, IRQ15
 
@@ -35,16 +34,13 @@ init_timer:
 	mov ecx, eax
 
 	mov al, 0x36
-	mov dx, 0x43
-	call port_byte_out
+	out 0x43, al
 
 	mov al, cl
-	mov dx, 0x40
-	call port_byte_out
+	out 0x40, al
 
 	mov al, ch
-	mov dx, 0x40
-	call port_byte_out
+	out 0x40, al
 
 	pop edx
 	pop ecx

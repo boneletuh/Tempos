@@ -1,0 +1,31 @@
+crear OS que sea:
+ - simple
+ - rapido
+ - use poca memoria
+ - que los programas puedan hacer lo que quieran
+ - que el usuario lo pueda cambiar el OS
+ - cada aplicacion corre en un escritorio distinto
+ - cada aplicacion controla los graficos como quiera
+ - documentar como funciona el OS
+ - documentar como voy creando el OS
+
+abreviaciones:
+ 'oficiales'
+ OS - sistema operativo
+ VM - máquina virtual
+ RM - real mode
+ PM - protected mode
+ asm - assembly
+ addr - address
+ VGA - Video Graphics Array 
+ 'personales'
+ lbl - label
+ i386 - x86 32 bits
+ x64 - x86 64 bits
+
+páginas útiles:
+ https://www.agner.org/optimize/instruction_tables.pdf
+ https://www.felixcloutier.com/x86/
+ https://github.com/cfenollosa/os-tutorial/blob
+ https://cloc.info/upload
+ https://wiki.osdev.org/I/O_Ports
