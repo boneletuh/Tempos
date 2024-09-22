@@ -11,24 +11,24 @@ struc VesaModeInfoBlock				;	VesaModeInfoBlock_size = 256 bytes
 	.FirstWindowAttributes	resb 1
 	.SecondWindowAttributes	resb 1
 	.WindowGranularity	resw 1		;	in KB
-	.WindowSize		resw 1		;	in KB
+	.WindowSize		resw 1			;	in KB
 	.FirstWindowSegment	resw 1		;	0 if not supported
-	.SecondWindowSegment	resw 1		;	0 if not supported
+	.SecondWindowSegment	resw 1	;	0 if not supported
 	.WindowFunctionPtr	resd 1
 	.BytesPerScanLine	resw 1
  
 	;	Added in Revision 1.2
-	.Width			resw 1		;	in pixels(graphics)/columns(text)
-	.Height			resw 1		;	in pixels(graphics)/columns(text)
-	.CharWidth		resb 1		;	in pixels
-	.CharHeight		resb 1		;	in pixels
+	.Width			resw 1			;	in pixels(graphics)/columns(text)
+	.Height			resw 1			;	in pixels(graphics)/columns(text)
+	.CharWidth		resb 1			;	in pixels
+	.CharHeight		resb 1			;	in pixels
 	.PlanesCount		resb 1
 	.BitsPerPixel		resb 1
 	.BanksCount		resb 1
 	.MemoryModel		resb 1		;	http://www.ctyme.com/intr/rb-0274.htm#Table82
-	.BankSize		resb 1		;	in KB
+	.BankSize		resb 1			;	in KB
 	.ImagePagesCount	resb 1		;	count - 1
-	.Reserved1		resb 1		;	equals 0 in Revision 1.0-2.0, 1 in 3.0
+	.Reserved1		resb 1			;	equals 0 in Revision 1.0-2.0, 1 in 3.0
  
 	.RedMaskSize		resb 1
 	.RedFieldPosition	resb 1
@@ -43,10 +43,12 @@ struc VesaModeInfoBlock				;	VesaModeInfoBlock_size = 256 bytes
 	;	Added in Revision 2.0
 	.LFBAddress		resd 1
 	.OffscreenMemoryOffset	resd 1
-	.OffscreenMemorySize	resw 1		;	in KB
-	.Reserved2		resb 206	;	available in Revision 3.0, but useless for now
+	.OffscreenMemorySize	resw 1	;	in KB
+	.Reserved2		resb 206		;	available in revision 3.0
 endstruc
-vbe_struct_addr equ 0x500 ; the place where the vbe info was stored int the bootloader
+
+vbe_struct_addr equ 0x500 ; the place where the vbe info was stored in the bootloader
+
 mov ax, WORD [vbe_struct_addr + VesaModeInfoBlock.Width]
 mov WORD [bl_vbe_width], ax
 
