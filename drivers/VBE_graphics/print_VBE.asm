@@ -1,6 +1,9 @@
 ; TODO: optimize the calling arguments of the functions and the `pushad` and `popad`
 bits 32
 
+; TEST: delete this
+extern num_str, int_to_hex, new_line
+
 extern font
 extern char_width, char_height
 
@@ -94,6 +97,7 @@ VBE_backspace:
 	mov ecx, char_width
 	add ecx, 2 ; FIX: get the horizontal padding from a symbol
 	mov eax, edi
+	xor edx, edx
 	div ecx
 	sub edi, edx
 	; 3#
@@ -107,6 +111,7 @@ VBE_backspace:
 	mul edx
 	mov ecx, eax
 	mov eax, ebx
+	xor edx, edx	
 	div ecx
 	mov eax, ebx
 	sub eax, edx
@@ -151,7 +156,7 @@ VBE_print_new_line:
 	; screen_width * Bpp * (char_height + padding)
 	mov edi, 800 * 3 * (16 + 4) ; FIX: get this parameters the right way
 	mov eax, DWORD [cursor]
-	mov edx, 0
+	xor edx, edx
 	div edi
 	sub DWORD [cursor], edx
 

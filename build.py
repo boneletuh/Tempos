@@ -30,7 +30,6 @@ sep = "\\" if os.name == 'nt' else "/"
 bootloader = f'bootloader{sep}bootloader'
 kernel_entry = f'bootloader{sep}kernel_entry'
 
-driver_screen = f'drivers{sep}screen'
 driver_keyboard = f'drivers{sep}keyboard'
 driver_VBE_init = f'drivers{sep}VBE_graphics{sep}init_VBE'
 driver_VBE_print = f'drivers{sep}VBE_graphics{sep}print_VBE'
@@ -52,7 +51,6 @@ output = 'tempos.img'
 cmd(f'nasm {bootloader}.asm -fbin -o {bootloader}.bin')
 print(bootloader_size(f'{bootloader}.bin'))
 # compile drivers
-cmd(f'nasm -Wa {driver_screen}.asm -felf -o {driver_screen}.o')
 cmd(f'nasm -Wa {driver_keyboard}.asm -felf -o {driver_keyboard}.o')
 cmd(f'nasm -Wa {driver_VBE_init}.asm -felf -o {driver_VBE_init}.o')
 cmd(f'nasm -Wa {driver_VBE_print}.asm -felf -o {driver_VBE_print}.o')
@@ -74,9 +72,9 @@ cmd(f'nasm {cpu_timer}.asm -felf -o {cpu_timer}.o')
 cmd(f'nasm {kernel_entry}.asm -felf -o {kernel_entry}.o')
 # link kernel_entry, kernel and everything else together
 if os.name == 'nt':
-    cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_screen}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+    cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 elif os.name == 'posix':
-    cmd(f'ld -flto -Oz -s -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_screen}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+    cmd(f'ld -flto -Oz -s -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 cmd(f'objcopy -O binary -j .text {kernel}.tmp {kernel}.bin')
 
 # join bootloader and kernel into the output file
@@ -102,7 +100,6 @@ cmd(f'{delete} {utils}.o')
 cmd(f'{delete} {kalloc}.o')
 cmd(f'{delete} {constants}.o')
 # in drivers/
-cmd(f'{delete} {driver_screen}.o')
 cmd(f'{delete} {driver_keyboard}.o')
 cmd(f'{delete} {driver_VBE_init}.o')
 cmd(f'{delete} {driver_VBE_print}.o')

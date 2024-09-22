@@ -4,8 +4,6 @@ extern VBE_print, VBE_backspace
 
 extern register_interrupt_handler
 extern IRQ1
-extern kprint
-extern kprint_backspace
 extern keyboard_cmd
 
 ; FIX: use a pointer to a kernel allocate page
@@ -66,7 +64,6 @@ print_letter:
 	mov BYTE [edi], al
 	; print the symbol
 	call VBE_print
-	;call kprint
 	; update the index
 	inc WORD [idxbuff]
 	jmp .print_letter_end
@@ -75,7 +72,6 @@ print_letter:
 	; update the cursor and the index to the buffer
 	dec WORD [idxbuff]
 	call VBE_backspace
-	;call kprint_backspace
 	; clean the last symbol
 	movzx edi, WORD [idxbuff]
 	mov BYTE [keybuff + edi], 0

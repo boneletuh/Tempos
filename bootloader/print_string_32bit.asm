@@ -2,7 +2,7 @@
 bits 32
 
 ; defining constants
-; this is were video memory starts
+; this is were VGA text memory starts
 VIDEO_MEMORY equ 0xb8000
 WHITE_ON_BLACK equ 00001111b
 

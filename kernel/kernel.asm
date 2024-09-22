@@ -4,7 +4,6 @@ bits 32
 extern test_bl_struct ; TEST: DELETE
 extern bl_vbe_width, bl_vbe_height, bl_vbe_addr, bl_vbe_bpp
 extern clear_screen
-extern kprint
 extern isr_install
 extern init_timer, init_keyboard, tick
 extern keybuff, idxbuff
@@ -57,53 +56,11 @@ _start:
 	call isr_install
 	call irq_install
 
-	mov edi, cmd_arrow
-	call kprint
-
-
 	call init_VBE
 	call rand_colors
 
-
-	mov edi, tst_str
+	mov edi, cmd_arrow
 	call VBE_print
-
-	;mov edi, new_line
-	;call VBE_print
-
-	mov edi, tst_str2
-	call VBE_print
-
-	;mov edi, new_line
-	;call VBE_print
-
-	mov edi, tst_str3
-	call VBE_print
-
-	;mov edi, new_line
-	;call VBE_print
-
-	mov ebx, 5
-.tst_loop:
-	call waste_time
-
-	mov eax, ebx
-	and eax, 111b
-
-	mov edi, num_str
-	call int_to_hex
-	call VBE_print
-
-	dec ebx
-	jnz .tst_loop
-
-
-	mov edi, tst_str3
-	call VBE_print
-
-	mov edi, new_line
-	call VBE_print
-
 
 %if 0
 	mov eax, DWORD [bl_vbe_addr]
@@ -153,7 +110,6 @@ keyboard_cmd:
 	; print a new line to separate the command written from what the command does
 	mov edi, new_line
 	call VBE_print
-	;call kprint
 
 	; match command "PAGE"
 	mov edi, page_cmd
@@ -168,7 +124,6 @@ keyboard_cmd:
 	mov edi, num_str
 	call int_to_hex
 	call VBE_print
-	;call kprint
 	; end matching for more commands
 	jmp .keyboard_cmd_handler_end
 
@@ -185,7 +140,6 @@ keyboard_cmd:
 	mov edi, num_str
 	call int_to_hex
 	call VBE_print
-	;call kprint
 	; end matching for more commands
 	jmp .keyboard_cmd_handler_end
 
@@ -207,7 +161,6 @@ keyboard_cmd:
 	; make it nicer
 	mov edi, cmd_arrow
 	call VBE_print
-	;call kprint
 
 	pop ax
 	pop edi

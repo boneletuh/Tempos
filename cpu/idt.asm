@@ -25,6 +25,8 @@ global set_idt_gate
 ;  ebx - the function handler address
 set_idt_gate:
 	push edi
+	push ebx
+
 	; the adrress of the idt gate to set
 	lea edi, [idt + eax*idt_gate_size]
 
@@ -35,6 +37,7 @@ set_idt_gate:
 	shr ebx, 16 ; get the high bits
 	mov WORD [edi + 6], bx
 
+	pop ebx
 	pop edi
 	ret
 

@@ -1,6 +1,5 @@
 bits 32
 
-extern kprint
 extern int_to_hex
 extern register_interrupt_handler
 extern IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7, IRQ8, IRQ9, IRQ10, IRQ11, IRQ12, IRQ13, IRQ14, IRQ15
