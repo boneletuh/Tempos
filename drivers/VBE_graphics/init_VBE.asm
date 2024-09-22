@@ -15,7 +15,7 @@ init_VBE:
 
 	; Store how many bytes the screen takes up
 	; screen_size_bytes := width * height * (bpp / 8)
-	mov edx, 0
+	mov edx, 0 ; FIX: unneeded instruction
 	movzx eax, WORD [bl_vbe_width]
 	movzx ebx, WORD [bl_vbe_height]
 	mul ebx ; pxls_count := width * height

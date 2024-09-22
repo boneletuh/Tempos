@@ -52,29 +52,6 @@ irq_install:
 
 	ret
 
-; IO ports 0x60-0x64 keyboard and mouse
-;https://wiki.osdev.org/I/O_Ports
-;https://wiki.osdev.org/"8042"_PS/2_Controller
-;https://wiki.osdev.org/Interrupts#Standard_ISA_IRQs
-;https://wiki.osdev.org/VGA_Hardware#VGA_Registers
-;https://forum.osdev.org/viewtopic.php?f=1&t=10534
-;https://forum.osdev.org/viewtopic.php?p=288844
-;https://www.scs.stanford.edu/10wi-cs140/pintos/specs/freevga/vga/vgamem.htm
-;http://www.brokenthorn.com/Resources/OSDev7.html
-;http://www.brokenthorn.com/Resources/OSDev10.html
-;https://github.com/Overv/MineAssemble/blob/master/src/vga.asm
-;http://bos.asmhackers.net/docs/vga_without_bios/docs/palettesetting.pdf
-
-;https://wiki.osdev.org/VESA_Video_Modes
-;https://forum.osdev.org/viewtopic.php?f=1&t=44452
-;https://board.flatassembler.net/topic.php?t=7866
-;https://forum.osdev.org/viewtopic.php?f=1&t=15292
-
-;https://en.wikipedia.org/wiki/CPUID
-
-;https://www.reddit.com/r/osdev/comments/16u0d2t/passing_information_from_bootloader_to_the_kernel/
-
-;https://stackoverflow.com/questions/43786251/int-13h-42h-doesnt-load-anything-in-bochs/43787939#43787939
 global _start
 _start:
 	call isr_install
@@ -87,33 +64,45 @@ _start:
 	call init_VBE
 	call rand_colors
 
-	;1 95,6 s
-	;2 50,9 s
-	;f 7 s
-	;n 4,6 s
-	mov eax, 1000
-.num_loop:
-	mov edi, num_str
-	call int_to_hex
+
+	mov edi, tst_str
 	call VBE_print
-
-	mov edi, new_line
-	call VBE_print
-
-	dec eax
-	cmp eax, 0
-	jne .num_loop
-
-
-
-	;mov edi, tst_str
-	;call VBE_print
 
 	;mov edi, new_line
 	;call VBE_print
 
-	;mov edi, tst_str2
+	mov edi, tst_str2
+	call VBE_print
+
+	;mov edi, new_line
 	;call VBE_print
+
+	mov edi, tst_str3
+	call VBE_print
+
+	;mov edi, new_line
+	;call VBE_print
+
+	mov ebx, 5
+.tst_loop:
+	call waste_time
+
+	mov eax, ebx
+	and eax, 111b
+
+	mov edi, num_str
+	call int_to_hex
+	call VBE_print
+
+	dec ebx
+	jnz .tst_loop
+
+
+	mov edi, tst_str3
+	call VBE_print
+
+	mov edi, new_line
+	call VBE_print
 
 
 %if 0
@@ -163,7 +152,8 @@ keyboard_cmd:
 
 	; print a new line to separate the command written from what the command does
 	mov edi, new_line
-	call kprint
+	call VBE_print
+	;call kprint
 
 	; match command "PAGE"
 	mov edi, page_cmd
@@ -177,7 +167,8 @@ keyboard_cmd:
 	mov eax, edi
 	mov edi, num_str
 	call int_to_hex
-	call kprint
+	call VBE_print
+	;call kprint
 	; end matching for more commands
 	jmp .keyboard_cmd_handler_end
 
@@ -193,7 +184,8 @@ keyboard_cmd:
 	mov eax, DWORD [tick]
 	mov edi, num_str
 	call int_to_hex
-	call kprint
+	call VBE_print
+	;call kprint
 	; end matching for more commands
 	jmp .keyboard_cmd_handler_end
 
@@ -214,7 +206,8 @@ keyboard_cmd:
 	mov WORD [idxbuff], 0
 	; make it nicer
 	mov edi, cmd_arrow
-	call kprint
+	call VBE_print
+	;call kprint
 
 	pop ax
 	pop edi
@@ -226,3 +219,4 @@ page_cmd: db "PAGE", 0
 
 tst_str: db "HOLA CARACOLA QUE TAL ESTAS YO ESTOY BIEN", 0
 tst_str2: db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
+tst_str3 : db "MONO", 0
