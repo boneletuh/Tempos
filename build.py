@@ -1,7 +1,8 @@
 import os, time
+
 t = time.time()
 
-def szbl(file_path):
+def bootloader_size(file_path):
 	with open(file_path, "rb") as file:
 		bs = file.read()
 		i = 510 -1
@@ -9,7 +10,7 @@ def szbl(file_path):
 			i -= 1
 		size = i
 	return size, 510-size
-# a shorthand
+
 def cmd(command):
     i = time.time()
     '''mode = 'c'
@@ -21,32 +22,35 @@ def cmd(command):
         exit(1)
     print(f'{time.time() - i:.3f}s', command)
 
-bootloader = 'bootloader\\bootloader'
-kernel_entry = 'bootloader\\kernel_entry'
+if os.name not in ['nt', 'posix']:
+    raise Exception("platform not suported")
 
-driver_screen = 'drivers\\screen'
-driver_keyboard = 'drivers\\keyboard'
-driver_VBE_init = 'drivers\\VBE_graphics\\init_VBE'
-driver_VBE_print = 'drivers\\VBE_graphics\\print_VBE'
-driver_VBE_font = 'drivers\\VBE_graphics\\font'
+sep = "\\" if os.name == 'nt' else "/"
 
-kernel = 'kernel\\kernel'
-utils = 'kernel\\utils'
-kalloc = 'kernel\\kalloc'
-constants = 'kernel\\constants'
+bootloader = f'bootloader{sep}bootloader'
+kernel_entry = f'bootloader{sep}kernel_entry'
 
-cpu_idt = 'cpu\\idt'
-cpu_interrupt = 'cpu\\interrupt'
-cpu_isr = 'cpu\\isr'
-cpu_timer = 'cpu\\timer'
+driver_keyboard = f'drivers{sep}keyboard'
+driver_VBE_init = f'drivers{sep}VBE_graphics{sep}init_VBE'
+driver_VBE_print = f'drivers{sep}VBE_graphics{sep}print_VBE'
+driver_VBE_font = f'drivers{sep}VBE_graphics{sep}font'
 
-output = 'tempos.iso'
+kernel = f'kernel{sep}kernel'
+utils = f'kernel{sep}utils'
+kalloc = f'kernel{sep}kalloc'
+constants = f'kernel{sep}constants'
 
-# compile bootloader\\
+cpu_idt = f'cpu{sep}idt'
+cpu_interrupt = f'cpu{sep}interrupt'
+cpu_isr = f'cpu{sep}isr'
+cpu_timer = f'cpu{sep}timer'
+
+output = 'tempos.img'
+
+# compile bootloader{sep}
 cmd(f'nasm {bootloader}.asm -fbin -o {bootloader}.bin')
-print(szbl(f'{bootloader}.bin'))
+print(bootloader_size(f'{bootloader}.bin'))
 # compile drivers
-cmd(f'nasm -Wa {driver_screen}.asm -felf -o {driver_screen}.o')
 cmd(f'nasm -Wa {driver_keyboard}.asm -felf -o {driver_keyboard}.o')
 cmd(f'nasm -Wa {driver_VBE_init}.asm -felf -o {driver_VBE_init}.o')
 cmd(f'nasm -Wa {driver_VBE_print}.asm -felf -o {driver_VBE_print}.o')
@@ -67,60 +71,43 @@ cmd(f'nasm {cpu_timer}.asm -felf -o {cpu_timer}.o')
 # compile kernel_entry
 cmd(f'nasm {kernel_entry}.asm -felf -o {kernel_entry}.o')
 # link kernel_entry, kernel and everything else together
-cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_screen}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
-#cmd(f'ld -flto -Oz -s -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_screen}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+if os.name == 'nt':
+    cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+elif os.name == 'posix':
+    cmd(f'ld -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 cmd(f'objcopy -O binary -j .text {kernel}.tmp {kernel}.bin')
 
 # join bootloader and kernel into the output file
-cmd(f'copy /b {bootloader}.bin+{kernel}.bin {output}')
-#cmd(f'cat {bootloader}.bin {kernel}.bin > {output}')
+if os.name == 'nt':
+    cmd(f'copy /b {bootloader}.bin+{kernel}.bin {output}')
+elif os.name == 'posix':
+    cmd(f'cat {bootloader}.bin {kernel}.bin > {output}')
 
 # create the virtual machine in qemu
 #cmd(f'qemu-system-x86_64 -fda {output}')
-cmd(f'qemu-system-x86_64 -drive file={output},format=raw,index=0,if=floppy')
-'''
-# clean up intermediate filesh
-# in bootloader\\
-cmd(f'rm {bootloader}.bin')
-cmd(f'rm {kernel_entry}.o')
-# in kernel\\
-cmd(f'rm {kernel}.o')
-cmd(f'rm {kernel}.tmp')
-cmd(f'rm {kernel}.bin')
-cmd(f'rm {utils}.o')
-cmd(f'rm {kalloc}.o')
-cmd(f'rm {constants}.o')
-# in drivers\\
-cmd(f'rm {driver_screen}.o')
-cmd(f'rm {driver_keyboard}.o')
-cmd(f'rm {driver_VBE_init}.o')
-cmd(f'rm {driver_VBE_print}.o')
-cmd(f'rm {driver_VBE_font}.o')
-# in cpu\\
-cmd(f'rm {cpu_idt}.o')
-cmd(f'rm {cpu_interrupt}.o')
-cmd(f'rm {cpu_isr}.o')
-cmd(f'rm {cpu_timer}.o')
-'''
-cmd(f'del {bootloader}.bin')
-cmd(f'del {kernel_entry}.o')
-# in kernel\\
-cmd(f'del {kernel}.o')
-cmd(f'del {kernel}.tmp')
-cmd(f'del {kernel}.bin')
-cmd(f'del {utils}.o')
-cmd(f'del {kalloc}.o')
-cmd(f'del {constants}.o')
-# in drivers\\
-cmd(f'del {driver_screen}.o')
-cmd(f'del {driver_keyboard}.o')
-cmd(f'del {driver_VBE_init}.o')
-cmd(f'del {driver_VBE_print}.o')
-cmd(f'del {driver_VBE_font}.o')
-# in cpu\\
-cmd(f'del {cpu_idt}.o')
-cmd(f'del {cpu_interrupt}.o')
-cmd(f'del {cpu_isr}.o')
-cmd(f'del {cpu_timer}.o')
+cmd(f'qemu-system-i386   -drive file={output},format=raw,index=0,if=floppy')
+
+delete = "del" if os.name == 'nt' else "rm"
+# clean up intermediate files
+# in bootloader/
+cmd(f'{delete} {bootloader}.bin')
+cmd(f'{delete} {kernel_entry}.o')
+# in kernel/
+cmd(f'{delete} {kernel}.o')
+cmd(f'{delete} {kernel}.tmp')
+cmd(f'{delete} {kernel}.bin')
+cmd(f'{delete} {utils}.o')
+cmd(f'{delete} {kalloc}.o')
+cmd(f'{delete} {constants}.o')
+# in drivers/
+cmd(f'{delete} {driver_keyboard}.o')
+cmd(f'{delete} {driver_VBE_init}.o')
+cmd(f'{delete} {driver_VBE_print}.o')
+cmd(f'{delete} {driver_VBE_font}.o')
+# in cpu/
+cmd(f'{delete} {cpu_idt}.o')
+cmd(f'{delete} {cpu_interrupt}.o')
+cmd(f'{delete} {cpu_isr}.o')
+cmd(f'{delete} {cpu_timer}.o')
 
 print(time.time() - t)

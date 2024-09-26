@@ -1,6 +1,6 @@
 bits 32
 
-extern kprint
+extern VBE_print
 extern int_to_hex
 extern num_str
 extern new_line
@@ -312,6 +312,8 @@ expt_msg29: db "Reserved", 0
 expt_msg30: db "Reserved", 0
 expt_msg31: db "Reserved", 0
 
+extern VBE_print
+
 global isr_handler
 ; Params:
 ;  eax - the interrupt number code
@@ -319,22 +321,22 @@ isr_handler:
 	push edi
 
 	mov edi, receive_msg
-	call kprint
+	call VBE_print
 
 	; print the interrupt code
 	mov edi, num_str
 	call int_to_hex
-	call kprint
+	call VBE_print
 
 	mov edi, new_line
-	call kprint
+	call VBE_print
 
 	; print the corresponding interrupt code message
 	mov edi, [exception_messages + eax*4] ; get the string from the interrupt codes table
-	call kprint
+	call VBE_print
 
 	mov edi, new_line
-	call kprint
+	call VBE_print
 
 	pop edi
 

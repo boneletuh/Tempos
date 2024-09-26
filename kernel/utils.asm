@@ -4,7 +4,7 @@ global waste_time
 ; makes a loop that 'waits'
 waste_time:
 	push eax
-	mov eax, 1000*1000*100
+	mov eax, 1000*1000*50
 .waste_time_loop:
 	cmp eax, 0
 	je .waste_time_end

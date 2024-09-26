@@ -2,8 +2,6 @@ NASM_FLAGS = -Wa
 bootloader = bootloader/bootloader
 kernel_entry = bootloader/kernel_entry
 
-driver_ports = drivers/ports
-driver_screen = drivers/screen
 driver_keyboard = drivers/keyboard
 driver_VBE_init = drivers/VBE_graphics/init_VBE
 driver_VBE_print = drivers/VBE_graphics/print_VBE
@@ -19,7 +17,7 @@ cpu_interrupt = cpu/interrupt
 cpu_isr = cpu/isr
 cpu_timer = cpu/timer
 
-output = tempos.iso
+output = tempos.img
 
 all: run
 
@@ -30,8 +28,6 @@ compile:
 	nasm ${NASM_FLAGS} ${bootloader}.asm -fbin -o ${bootloader}.bin
 
 	# compile drivers
-	nasm ${NASM_FLAGS} ${driver_ports}.asm -felf -o ${driver_ports}.o
-	nasm ${NASM_FLAGS} ${driver_screen}.asm -felf -o ${driver_screen}.o
 	nasm ${NASM_FLAGS} ${driver_keyboard}.asm -felf -o ${driver_keyboard}.o
 	nasm ${NASM_FLAGS} ${driver_VBE_init}.asm -felf -o ${driver_VBE_init}.o
 	nasm ${NASM_FLAGS} ${driver_VBE_print}.asm -felf -o ${driver_VBE_print}.o
@@ -52,8 +48,8 @@ compile:
 	# compile kernel_entry
 	nasm ${NASM_FLAGS} ${kernel_entry}.asm -felf -o ${kernel_entry}.o
 	# link kernel_entry, kernel and everything else together
-	#ld -T NUL -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_ports}.o ${driver_screen}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
-	ld -m elf_i386 -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_ports}.o ${driver_screen}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
+	#ld -T NUL -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
+	ld -m elf_i386 -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
 	objcopy -O binary -j .text ${kernel}.tmp ${kernel}.bin
 
 	# join bootloader and kernel into the output file
@@ -79,8 +75,6 @@ clean:
 	rm ${kalloc}.o
 	rm ${constants}.o
 	# in drivers/
-	rm ${driver_ports}.o
-	rm ${driver_screen}.o
 	rm ${driver_keyboard}.o
 	rm ${driver_VBE_init}.o
 	rm ${driver_VBE_print}.o

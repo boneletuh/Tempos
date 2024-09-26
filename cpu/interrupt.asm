@@ -40,6 +40,7 @@ irq_common_stub:
     ; FIX: get the code after the "pushad"
     mov ecx, DWORD [esp] ; get the interrupt code
     pusha
+    
     mov DWORD [registers_type + 36], ecx
     mov ecx, registers_type
 

@@ -23,4 +23,5 @@ init_pm:
 	mov ebp, 0x90000
 	mov esp, ebp
 
-	call BEGIN_PM ; Begin executing useful code in protected mode
+	; Begin executing code in protected mode
+	call BEGIN_PM 

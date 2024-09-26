@@ -4,6 +4,11 @@ global char_width, char_height
 char_width equ 8
 char_height equ 16
 
+global char_width_w_padding, char_height_w_padding
+char_width_w_padding equ char_width + 2
+char_height_w_padding equ char_height + 4
+
+
 global font
 ; this is the default font the os terminal will use
 font:

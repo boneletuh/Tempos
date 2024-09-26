@@ -1,11 +1,12 @@
 bits 32
 
+extern VBE_print, VBE_backspace
+
 extern register_interrupt_handler
 extern IRQ1
-extern kprint
-extern kprint_backspace
 extern keyboard_cmd
 
+; FIX: use a pointer to a kernel allocate page
 ; buffer storing the text written
 global keybuff
 keybuff: times 256 db 0
@@ -62,7 +63,7 @@ print_letter:
 	lea edi, [keybuff + edi]
 	mov BYTE [edi], al
 	; print the symbol
-	call kprint
+	call VBE_print
 	; update the index
 	inc WORD [idxbuff]
 	jmp .print_letter_end
@@ -70,7 +71,7 @@ print_letter:
 	; FIX: this will underflow if 'idxbuff' is 0
 	; update the cursor and the index to the buffer
 	dec WORD [idxbuff]
-	call kprint_backspace
+	call VBE_backspace
 	; clean the last symbol
 	movzx edi, WORD [idxbuff]
 	mov BYTE [keybuff + edi], 0

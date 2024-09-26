@@ -1,12 +1,15 @@
 ; TODO: optimize the calling arguments of the functions and the `pushad` and `popad`
 bits 32
 
-
 extern font
 extern char_width, char_height
+extern char_width_w_padding, char_height_w_padding
+extern vbe_char_line_bytes
 
 extern bl_vbe_width, bl_vbe_height, bl_vbe_bpp, bl_vbe_addr
-extern vbe_screen_sz
+extern vbe_screen_sz, vbe_Bpp, vbe_width_bytes
+extern vbe_char_width_bytes
+extern vbe_char_width_w_padding_bytes
 
 extern memory_set, memory_copy
 
@@ -16,22 +19,21 @@ cursor: dd 0
 
 global VBE_roll_screen_up
 ; rolls the screen up by one pixel
-; TODO: optimize this loop (a lot)
+; TODO: optimize this loop
 VBE_roll_screen_up:
 	pushad
 	; number of rows a character takes: (char_height+padding) * bl_vbe_width * bl_vbe_bpp/8
-	mov ebx, (16 + 4)*800*3 ; FIX:
+	mov ebx, DWORD [vbe_char_line_bytes]
 	; the index for the loop
-	mov edx, 16 + 4 ; skip the character line
+	mov edx, char_height_w_padding ; skip the character line
 .VBE_roll_screen_up_loop:
 	cmp dx, WORD [bl_vbe_height]
 	jae .VBE_roll_screen_up_end
 
 	; copy a line to the previous line to 'roll' it up
 	; line to copy
-	lea eax, [edx*3] ; FIX: get the value from bl_vbe_bpp
 	push edx
-	movzx edx, WORD [bl_vbe_width]
+	movzx eax, WORD [vbe_width_bytes]
 	mul edx
 	pop edx
 
@@ -42,7 +44,7 @@ VBE_roll_screen_up:
 	sub edi, ebx
 	
 	; the number of bytes to copy
-	mov eax, 800*3 ; FIX: bl_vbe_width * bl_vbe_bpp/8
+	movzx eax, WORD [vbe_width_bytes]
 	call memory_copy
 
 	; next iteration
@@ -50,16 +52,86 @@ VBE_roll_screen_up:
 	jmp .VBE_roll_screen_up_loop	
 .VBE_roll_screen_up_end:
 	; set the bottom line of the screen to black
-	mov eax, ebx ; FIX: bl_vbe_width * bl_vbe_bpp/8
-	mov edi, DWORD [bl_vbe_addr]
-	;add edi, 800*(600-1)*3  ; FIX: bl_vbe_width*(bl_vbe_height -1)*bl_vbe_bpp/8
-	add edi, 800*(600-(16+4))*3  ; FIX: bl_vbe_width*(bl_vbe_height - (char_height+padding))*bl_vbe_bpp/8
+	mov eax, ebx
+	mov edi, DWORD [vbe_screen_sz]
+	sub edi, DWORD [vbe_char_line_bytes]
+	add edi, DWORD [bl_vbe_addr]
 	mov dl, 0 ; color black
 	call memory_set
 
 	popad
 	ret
 
+global VBE_backspace
+; deletes the last printed character
+VBE_backspace:
+	pushad
+
+	mov ebx, DWORD [cursor]
+
+	; point to the previous place to print
+	movzx ecx, BYTE [vbe_char_width_w_padding_bytes]
+	sub ebx, ecx
+
+	; adjust for out of line offsets
+	; 1# line_offset = offset % (width * Bpp)
+	; 2# char_beginning = line_offset - (line_offset % (char_width + horizontal_padding))
+	; 3# line_beginning = offset - (offset % (width * Bpp * (char_height + vertical_padding)))
+	; 4# offset = line_beginning + char_beginning
+
+	; 1#
+	;  edi = line_offset
+	movzx ecx, WORD [vbe_width_bytes]
+	mov eax, ebx
+	xor edx, edx
+	div ecx
+	mov edi, edx
+	; 2#
+	;  edi = char_beginning
+	mov ecx, char_width_w_padding
+	mov eax, edi
+	xor edx, edx
+	div ecx
+	sub edi, edx
+	; 3#
+	;  eax = line_beginning
+	mov eax, char_height_w_padding
+	movzx edx, WORD [vbe_width_bytes]
+	mul edx
+	mov ecx, eax
+	mov eax, ebx
+	xor edx, edx	
+	div ecx
+	mov eax, ebx
+	sub eax, edx
+	; 4#
+	add eax, edi
+	mov DWORD [cursor], eax
+
+	; fill the erased character with black
+	mov edi, eax
+	add edi, DWORD [bl_vbe_addr]
+
+	movzx ebx, WORD [vbe_width_bytes]
+
+	mov eax, char_width_w_padding
+	movzx ecx, BYTE [vbe_Bpp]
+	mul ecx
+
+	mov ecx, char_height_w_padding
+
+	mov dl, 0
+.VBE_backspace_clean_char:
+	call memory_set
+
+	add edi, ebx
+
+	dec ecx
+	cmp ecx, 0
+	jne .VBE_backspace_clean_char
+
+	popad
+	ret
 
 ; prints a new line / line feed
 ; Input:
@@ -68,9 +140,9 @@ VBE_print_new_line:
 	pushad
 
 	; screen_width * Bpp * (char_height + padding)
-	mov edi, 800 * 3 * (16 + 4) ; FIX: get this parameters the right way
+	mov edi, DWORD [vbe_char_line_bytes]
 	mov eax, DWORD [cursor]
-	mov edx, 0
+	xor edx, edx
 	div edi
 	sub DWORD [cursor], edx
 
@@ -88,11 +160,11 @@ global VBE_print_char_from_font
 VBE_print_char_from_font:
 	pushad
 
+	push ebx
+
 	; value to add to start printing in the next line
-	movzx ecx, WORD [bl_vbe_width]
-	lea ecx, [ecx*3] ; FIX: get the value from bl_vbe_bpp
-	mov esi, char_width
-	lea esi, [esi*3] ; FIX: get the value from bl_vbe_bpp
+	movzx ecx, WORD [vbe_width_bytes]
+	movzx esi, BYTE [vbe_char_width_bytes]
 	sub ecx, esi
 
 	; pointer to the bytes that the bits are taken off of the character of the font
@@ -116,7 +188,7 @@ VBE_print_char_from_font:
 	shr dl, 7
 	; if the bit is 0 it sets dl to 0x00, if the bit is 1 it sets dl to 0xff
 	neg dl
-	
+	; FIX: this assumes 3 Bpp (bytes per pixel)
 	mov BYTE [edi], dl ; Blue
 	mov BYTE [edi+1], dl ; Green
 	mov BYTE [edi+2], dl ; Red
@@ -137,11 +209,47 @@ VBE_print_char_from_font:
 	dec ebx
 	jnz .VBE_print_char_from_font_y
 
+	pop edi
+
+	; point to the next place to print
+	movzx ecx, BYTE [vbe_char_width_w_padding_bytes]
+	add edi, ecx
+
+	; update the offset to the next character position
+	; adjust for out of line offsets
+
+	; 1#  char_row_size = width * Bpp * (char_height+vertical_padding)
+	; 2#  line_beginning = offset - (offset % char_row_size)
+	; 3#  if width * Bpp < offset - line_beginning:
+	; 4#    offset = line_beginning + char_row_size
+	
+	; 1#
+	; ecx = char_row_size
+	mov eax, char_height_w_padding
+	movzx ecx, WORD [vbe_width_bytes]
+	mul ecx
+	mov ecx, eax
+	; 2#
+	; ebx = line_beginning
+	mov eax, edi
+	mov edx, 0
+	div ecx
+	mov ebx, edi
+	sub ebx, edx
+	; 3#
+	; edx = offset - line_beginning
+	; eax = width_Bpp
+	movzx eax, WORD [vbe_width_bytes]
+	mov edx, edi
+	sub edx, ebx
+	; 4#
+	add ebx, ecx
+	cmp edx, eax
+	cmovb ebx, edi
+	mov edi, ebx
+
 	; save the offset
-	;lea ebx, [ebx + (char_width+2) * 3]
-	mov ecx, char_width + 2 ; add 2 spacing between symbols
-	lea ecx, [ecx*3] ; FIX: get the value from bl_vbe_bpp
-	add DWORD [cursor], ecx
+	mov DWORD [cursor], edi
 
 	popad
 	ret
@@ -173,11 +281,12 @@ VBE_print_char:
 	; set the cursor to the beginning of the line
 	mov edx, 0
 	mov eax, DWORD [cursor]
-	mov ebx, 800*3 ; FIX: screen_width * bytes_per_pixel
+	movzx ebx, WORD [vbe_width_bytes]
 	div ebx
 	sub DWORD [cursor], edx
 	; set the cursor one character-line up
-	sub DWORD [cursor], 800*(16+4)*3 ; FIX: screen_width*(char_height+padding)*bytes_per_pixel
+	mov edx, DWORD [vbe_char_line_bytes]
+	sub DWORD [cursor], edx
 
 .VBE_print_char_not_roll:
 	popad
