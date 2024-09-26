@@ -1,7 +1,6 @@
 bits 32
 
 ; import symbols from other files
-extern test_bl_struct ; TEST: DELETE
 extern bl_vbe_width, bl_vbe_height, bl_vbe_addr, bl_vbe_bpp
 extern clear_screen
 extern isr_install
@@ -169,7 +168,3 @@ keyboard_cmd:
 cmd_arrow: db 10, "> ", 0
 time_cmd: db "TIME", 0
 page_cmd: db "PAGE", 0
-
-tst_str: db "HOLA CARACOLA QUE TAL ESTAS YO ESTOY BIEN", 0
-tst_str2: db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
-tst_str3 : db "MONO", 0

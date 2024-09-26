@@ -312,17 +312,13 @@ expt_msg29: db "Reserved", 0
 expt_msg30: db "Reserved", 0
 expt_msg31: db "Reserved", 0
 
-; TEST: delete this
-extern test_ABC, VBE_print
+extern VBE_print
 
 global isr_handler
 ; Params:
 ;  eax - the interrupt number code
 isr_handler:
 	push edi
-
-	;mov edi, test_ABC
-	;call VBE_print
 
 	mov edi, receive_msg
 	call VBE_print
@@ -384,6 +380,4 @@ irq_handler:
 	popad
 	ret
 
-; TEST:
-;receive_msg: db "received interrupt: ", 0
-receive_msg: db "RECIEVED INTERRUPT", 0
+receive_msg: db "received interrupt: ", 0

@@ -9,7 +9,3 @@ new_line: db 10, 0
 global num_str
 ; used to store a number as a string when it will be immediately used
 num_str: times 20 db 0
-
-; TEST: delete this
-global test_ABC
-test_ABC: db "X", 0

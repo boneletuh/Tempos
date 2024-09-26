@@ -74,7 +74,7 @@ cmd(f'nasm {kernel_entry}.asm -felf -o {kernel_entry}.o')
 if os.name == 'nt':
     cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 elif os.name == 'posix':
-    cmd(f'ld -flto -Oz -s -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+    cmd(f'ld -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 cmd(f'objcopy -O binary -j .text {kernel}.tmp {kernel}.bin')
 
 # join bootloader and kernel into the output file
@@ -85,7 +85,7 @@ elif os.name == 'posix':
 
 # create the virtual machine in qemu
 #cmd(f'qemu-system-x86_64 -fda {output}')
-cmd(f'qemu-system-x86_64 -drive file={output},format=raw,index=0,if=floppy')
+cmd(f'qemu-system-i386   -drive file={output},format=raw,index=0,if=floppy')
 
 delete = "del" if os.name == 'nt' else "rm"
 # clean up intermediate files

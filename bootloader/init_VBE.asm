@@ -63,11 +63,13 @@ endstruc
 ; address with at least 512 bytes, that later the kernel entry will take the information from
 VBE_info_addr equ 0x500
 
+%define VBE_target_video_mode 115h  ; mode number for the resolution 800x600x24bpp
+
 push ds
 pop es
 mov di, VBE_info_addr
 ; FIX: get the mode number using (int 10h, ax=0x4F00)
-mov cx, 115h ; mode number: 800x600x24bpp
+mov cx, VBE_target_video_mode
 mov ax, 0x4F01
 int 10h
 
@@ -81,7 +83,7 @@ movzx dx, BYTE [di + VesaModeInfoBlock.BitsPerPixel]
 call print_hex
 call print_nl
 
-mov bx, 0x4000 | 115h ; FIX: get mode using vbe functions
+mov bx, 0x4000 | VBE_target_video_mode ; FIX: get mode using vbe functions
 mov ax, 0x4F02
 int 10h
 
