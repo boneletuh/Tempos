@@ -14,7 +14,7 @@ disk_load:
 	mov ch, 0x00 ; cylinder
 	; dl = drive number
 	mov dh, 0x00 ; head number
-	int 0x13
+	int 13h
 	jc disk_error
 
 	pop dx

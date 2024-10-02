@@ -6,8 +6,8 @@ extern char_width, char_height
 extern char_width_w_padding, char_height_w_padding
 extern vbe_char_line_bytes
 
-extern bl_vbe_width, bl_vbe_height, bl_vbe_bpp, bl_vbe_addr
-extern vbe_screen_sz, vbe_Bpp, vbe_width_bytes
+extern bl_vbe_height, bl_vbe_addr
+extern vbe_screen_sz, vbe_width_bytes
 extern vbe_char_width_bytes
 extern vbe_char_width_w_padding_bytes
 
@@ -22,7 +22,6 @@ global VBE_roll_screen_up
 ; TODO: optimize this loop
 VBE_roll_screen_up:
 	pushad
-	; number of rows a character takes: (char_height+padding) * bl_vbe_width * bl_vbe_bpp/8
 	mov ebx, DWORD [vbe_char_line_bytes]
 	; the index for the loop
 	mov edx, char_height_w_padding ; skip the character line
@@ -74,9 +73,9 @@ VBE_backspace:
 	sub ebx, ecx
 
 	; adjust for out of line offsets
-	; 1# line_offset = offset % (width * Bpp)
-	; 2# char_beginning = line_offset - (line_offset % (char_width + horizontal_padding))
-	; 3# line_beginning = offset - (offset % (width * Bpp * (char_height + vertical_padding)))
+	; 1# line_offset = offset % width_bytes
+	; 2# char_beginning = line_offset - (line_offset % char_width_with_padding)
+	; 3# line_beginning = offset - (offset % (width_bytes * char_height_with_padding))
 	; 4# offset = line_beginning + char_beginning
 
 	; 1#
@@ -113,13 +112,8 @@ VBE_backspace:
 	add edi, DWORD [bl_vbe_addr]
 
 	movzx ebx, WORD [vbe_width_bytes]
-
-	mov eax, char_width_w_padding
-	movzx ecx, BYTE [vbe_Bpp]
-	mul ecx
-
+	movzx eax, BYTE [vbe_char_width_w_padding_bytes]
 	mov ecx, char_height_w_padding
-
 	mov dl, 0
 .VBE_backspace_clean_char:
 	call memory_set
@@ -217,18 +211,15 @@ VBE_print_char_from_font:
 
 	; update the offset to the next character position
 	; adjust for out of line offsets
-
-	; 1#  char_row_size = width * Bpp * (char_height+vertical_padding)
+	; TODO: improve this, maybe usiing vbe_char_line_bytes
+	; 1#  char_row_size = width_bytes * char_height_with_padding
 	; 2#  line_beginning = offset - (offset % char_row_size)
 	; 3#  if width * Bpp < offset - line_beginning:
 	; 4#    offset = line_beginning + char_row_size
 	
 	; 1#
 	; ecx = char_row_size
-	mov eax, char_height_w_padding
-	movzx ecx, WORD [vbe_width_bytes]
-	mul ecx
-	mov ecx, eax
+	mov ecx, DWORD [vbe_char_line_bytes]
 	; 2#
 	; ebx = line_beginning
 	mov eax, edi

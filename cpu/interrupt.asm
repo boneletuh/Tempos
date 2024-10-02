@@ -191,7 +191,6 @@ isr16:
 ; 17: Alignment Check Exception
 isr17:
     cli
-    push byte 0
     push byte 17
     jmp isr_common_stub
 
@@ -219,7 +218,6 @@ isr20:
 ; 21: Reserved
 isr21:
     cli
-    push byte 0
     push byte 21
     jmp isr_common_stub
 
