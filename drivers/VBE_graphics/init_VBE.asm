@@ -1,5 +1,6 @@
 bits 32
 
+extern bl_vbe_addr
 extern bl_vbe_width, bl_vbe_height, bl_vbe_bpp
 
 extern char_width, char_height
@@ -100,6 +101,33 @@ init_VBE:
 	mov al, char_height_w_padding
 	mul BYTE [vbe_Bpp]
 	mov BYTE [vbe_char_height_w_padding_bytes], al
+
+	call rand_colors
+
+	popad
+	ret
+
+; a silly function to kind of see if the screen works properly
+rand_colors:
+	pushad
+	; load the address of the screen, to write pixels
+	mov eax, DWORD [bl_vbe_addr]
+	; the amount of bytes to write to
+	mov ebx, DWORD [vbe_screen_sz]
+	; some random color to fill the screen with
+	mov dl, 0x00
+.aloop:
+	mov BYTE [eax], dl
+	inc eax
+
+	; randomize 'dl'
+	inc dl
+	xor dl, al
+	ror dl, 1
+
+	dec ebx
+	test ebx, ebx
+	jnz .aloop
 
 	popad
 	ret

@@ -14,7 +14,7 @@ putstr:
 
 	; print with the BIOS help
 	mov ah, 0x0e
-	int 0x10
+	int 10h
 
 	; next iteration
 	inc bx

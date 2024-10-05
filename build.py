@@ -39,6 +39,7 @@ kernel = f'kernel{sep}kernel'
 utils = f'kernel{sep}utils'
 kalloc = f'kernel{sep}kalloc'
 constants = f'kernel{sep}constants'
+shell = f'kernel{sep}shell'
 
 cpu_idt = f'cpu{sep}idt'
 cpu_interrupt = f'cpu{sep}interrupt'
@@ -47,7 +48,7 @@ cpu_timer = f'cpu{sep}timer'
 
 output = 'tempos.img'
 
-# compile bootloader{sep}
+# compile bootloader
 cmd(f'nasm {bootloader}.asm -fbin -o {bootloader}.bin')
 print(bootloader_size(f'{bootloader}.bin'))
 # compile drivers
@@ -61,6 +62,7 @@ cmd(f'nasm {kernel}.asm -felf -o {kernel}.o')
 cmd(f'nasm {utils}.asm -felf -o {utils}.o')
 cmd(f'nasm {kalloc}.asm -felf -o {kalloc}.o')
 cmd(f'nasm {constants}.asm -felf -o {constants}.o')
+cmd(f'nasm {shell}.asm -felf -o {shell}.o')
 
 # compile cpu
 cmd(f'nasm {cpu_idt}.asm -felf -o {cpu_idt}.o')
@@ -71,10 +73,8 @@ cmd(f'nasm {cpu_timer}.asm -felf -o {cpu_timer}.o')
 # compile kernel_entry
 cmd(f'nasm {kernel_entry}.asm -felf -o {kernel_entry}.o')
 # link kernel_entry, kernel and everything else together
-if os.name == 'nt':
-    cmd(f'ld -T NUL -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
-elif os.name == 'posix':
-    cmd(f'ld -m elf_i386 -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o  {constants}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
+link_all_args = "-T NUL" if os.name == 'nt' else "-m elf_i386"
+cmd(f'ld {link_all_args } -o {kernel}.tmp -Ttext 0x1000 {kernel_entry}.o {kernel}.o {utils}.o {kalloc}.o {constants}.o {shell}.o {driver_keyboard}.o {driver_VBE_init}.o {driver_VBE_print}.o {driver_VBE_font}.o {cpu_idt}.o {cpu_interrupt}.o {cpu_isr}.o {cpu_timer}.o')
 cmd(f'objcopy -O binary -j .text {kernel}.tmp {kernel}.bin')
 
 # join bootloader and kernel into the output file
@@ -85,26 +85,27 @@ elif os.name == 'posix':
 
 # create the virtual machine in qemu
 #cmd(f'qemu-system-x86_64 -fda {output}')
-cmd(f'qemu-system-i386   -drive file={output},format=raw,index=0,if=floppy')
+cmd(f'qemu-system-i386 -drive file={output},format=raw,index=0,if=floppy')
 
 delete = "del" if os.name == 'nt' else "rm"
 # clean up intermediate files
-# in bootloader/
+# in bootloader
 cmd(f'{delete} {bootloader}.bin')
 cmd(f'{delete} {kernel_entry}.o')
-# in kernel/
+# in kernel
 cmd(f'{delete} {kernel}.o')
 cmd(f'{delete} {kernel}.tmp')
 cmd(f'{delete} {kernel}.bin')
 cmd(f'{delete} {utils}.o')
 cmd(f'{delete} {kalloc}.o')
 cmd(f'{delete} {constants}.o')
-# in drivers/
+cmd(f'{delete} {shell}.o')
+# in drivers
 cmd(f'{delete} {driver_keyboard}.o')
 cmd(f'{delete} {driver_VBE_init}.o')
 cmd(f'{delete} {driver_VBE_print}.o')
 cmd(f'{delete} {driver_VBE_font}.o')
-# in cpu/
+# in cpu
 cmd(f'{delete} {cpu_idt}.o')
 cmd(f'{delete} {cpu_interrupt}.o')
 cmd(f'{delete} {cpu_isr}.o')

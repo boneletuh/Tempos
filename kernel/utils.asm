@@ -80,8 +80,8 @@ memory_copy:
 global int_to_hex
 ; converts the number to a string in hexadecimal
 ; Params:
-;  eax - the number to covert
-;  edi - where the number will be written
+;  eax - the unsigned number to covert
+;  edi - address of the null terminated string the number will be written
 hex_vals: db "0123456789ABCDEF"
 ; TODO: implement a reversed version
 int_to_hex:
@@ -114,6 +114,45 @@ int_to_hex:
 	pop ebx
 	pop eax
 	ret
+
+global int_to_dec
+; Params:
+;  eax - the unsigned number to be converted
+;  edi - the address where the decimal null terminated string will be stored
+int_to_dec:
+	pushad
+	sub esp, 32
+
+	mov esi, esp
+	mov BYTE [esi], 0
+
+	mov ebx, 10
+.int_to_dec_convert_loop:
+	xor edx, edx
+	div ebx
+
+	inc esi
+
+	add edx, '0'
+	mov BYTE [esi], dl
+
+	test eax, eax
+	jnz .int_to_dec_convert_loop
+
+.int_to_dec_invert_loop:
+	mov al, BYTE [esi]
+	mov BYTE [edi], al
+
+	dec esi
+	inc edi
+
+	cmp al, 0
+	jnz .int_to_dec_invert_loop
+
+	add esp, 32
+	popad
+	ret
+
 
 %if 1
 global memory_set

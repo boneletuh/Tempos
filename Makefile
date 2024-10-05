@@ -11,6 +11,7 @@ kernel = kernel/kernel
 utils = kernel/utils
 kalloc = kernel/kalloc
 constants = kernel/constants
+shell = kernel/shell
 
 cpu_idt = cpu/idt
 cpu_interrupt = cpu/interrupt
@@ -38,6 +39,7 @@ compile:
 	nasm ${NASM_FLAGS} ${utils}.asm -felf -o ${utils}.o
 	nasm ${NASM_FLAGS} ${kalloc}.asm -felf -o ${kalloc}.o
 	nasm ${NASM_FLAGS} ${constants}.asm -felf -o ${constants}.o
+	nasm ${NASM_FLAGS} ${shell}.asm -felf -o ${shell}.o
 
 	# compile cpu
 	nasm ${NASM_FLAGS} ${cpu_idt}.asm -felf -o ${cpu_idt}.o
@@ -48,8 +50,8 @@ compile:
 	# compile kernel_entry
 	nasm ${NASM_FLAGS} ${kernel_entry}.asm -felf -o ${kernel_entry}.o
 	# link kernel_entry, kernel and everything else together
-	#ld -T NUL -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
-	ld -m elf_i386 -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o  ${constants}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
+	#ld -T NUL -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o ${constants}.o ${shell}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
+	ld -m elf_i386 -o ${kernel}.tmp -Ttext 0x1000 ${kernel_entry}.o ${kernel}.o ${utils}.o ${kalloc}.o ${constants}.o ${shell}.o ${driver_keyboard}.o ${driver_VBE_init}.o ${driver_VBE_print}.o ${driver_VBE_font}.o ${cpu_idt}.o ${cpu_interrupt}.o ${cpu_isr}.o ${cpu_timer}.o
 	objcopy -O binary -j .text ${kernel}.tmp ${kernel}.bin
 
 	# join bootloader and kernel into the output file
@@ -74,6 +76,7 @@ clean:
 	rm ${utils}.o
 	rm ${kalloc}.o
 	rm ${constants}.o
+	rm ${shell}.o
 	# in drivers/
 	rm ${driver_keyboard}.o
 	rm ${driver_VBE_init}.o
@@ -84,4 +87,3 @@ clean:
 	rm ${cpu_interrupt}.o
 	rm ${cpu_isr}.o
 	rm ${cpu_timer}.o
-
