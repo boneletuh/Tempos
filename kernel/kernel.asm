@@ -6,7 +6,7 @@ extern init_timer, init_keyboard
 extern init_VBE
 extern init_shell
 extern num_str, new_line
-extern VBE_print, int_to_hex
+extern VBE_print, int_to_hex, int_to_dec
 
 ; initializes the IRQs
 irq_install:
@@ -32,14 +32,19 @@ _start:
 	mov DWORD [boot_time+0], edx
 	mov DWORD [boot_time+4], eax
 
-	mov edi, test_str
-	call VBE_print
-	mov edi, new_line
-	call VBE_print
-	
+
+;	mov edi, num_str
+;	mov BYTE [num_str+1], 0
+;	mov al, 0
+;.allchar:
+;	mov BYTE [num_str], al
+;	call VBE_print
+;
+;	inc al
+;	jnz .allchar
+
 
 	hlt
 	ret
 
-test_str db 'abcdefghijklmnopqrstuvwxyz', 0
 boot_time: dq 0

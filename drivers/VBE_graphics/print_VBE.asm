@@ -16,6 +16,23 @@ extern memory_set, memory_copy
 ; offset in the screen after of the last character printed 
 cursor: dd 0
 
+global VBE_clear_screen
+VBE_clear_screen:
+	push eax
+	push edi
+	push dx
+
+	mov eax, DWORD [vbe_screen_sz]
+	mov edi, DWORD [bl_vbe_addr]
+	mov dl, 0 ; black
+	call memory_set
+
+	mov DWORD [cursor], 0
+
+	pop dx
+	pop edi
+	pop eax
+	ret
 
 global VBE_roll_screen_up
 ; rolls the screen up by one pixel
@@ -133,7 +150,6 @@ VBE_backspace:
 VBE_print_new_line:
 	pushad
 
-	; screen_width * Bpp * (char_height + padding)
 	mov edi, DWORD [vbe_char_line_bytes]
 	mov eax, DWORD [cursor]
 	xor edx, edx

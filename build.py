@@ -48,7 +48,7 @@ cpu_timer = f'cpu{sep}timer'
 
 output = 'tempos.img'
 
-# compile bootloader{sep}
+# compile bootloader
 cmd(f'nasm {bootloader}.asm -fbin -o {bootloader}.bin')
 print(bootloader_size(f'{bootloader}.bin'))
 # compile drivers
@@ -89,10 +89,10 @@ cmd(f'qemu-system-i386 -drive file={output},format=raw,index=0,if=floppy')
 
 delete = "del" if os.name == 'nt' else "rm"
 # clean up intermediate files
-# in bootloader/
+# in bootloader
 cmd(f'{delete} {bootloader}.bin')
 cmd(f'{delete} {kernel_entry}.o')
-# in kernel/
+# in kernel
 cmd(f'{delete} {kernel}.o')
 cmd(f'{delete} {kernel}.tmp')
 cmd(f'{delete} {kernel}.bin')
@@ -100,12 +100,12 @@ cmd(f'{delete} {utils}.o')
 cmd(f'{delete} {kalloc}.o')
 cmd(f'{delete} {constants}.o')
 cmd(f'{delete} {shell}.o')
-# in drivers/
+# in drivers
 cmd(f'{delete} {driver_keyboard}.o')
 cmd(f'{delete} {driver_VBE_init}.o')
 cmd(f'{delete} {driver_VBE_print}.o')
 cmd(f'{delete} {driver_VBE_font}.o')
-# in cpu/
+# in cpu
 cmd(f'{delete} {cpu_idt}.o')
 cmd(f'{delete} {cpu_interrupt}.o')
 cmd(f'{delete} {cpu_isr}.o')

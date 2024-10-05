@@ -6,9 +6,9 @@ extern tick
 
 extern keybuff, idxbuff
 
-extern strcmp, int_to_hex
+extern strcmp, int_to_hex, int_to_dec
 
-extern VBE_print
+extern VBE_print, VBE_clear_screen
 
 extern num_str, new_line
 
@@ -26,33 +26,19 @@ init_shell:
     pop edi
     ret
 
-; prints a free page
-cmd_page:
-	push edi
-	push eax
-
-	call mmap
-	mov eax, edi
-	mov edi, num_str
-	call int_to_hex
-	call VBE_print
-
-	pop eax
-	pop edi
-	ret
-
 ; print the PIC timer
 cmd_time:
 	push edi
 	push eax
-	push edx
 
 	mov eax, DWORD [tick]
 	mov edi, num_str
-	call int_to_hex
+	call int_to_dec
 	call VBE_print
 
-	pop edx
+	mov edi, new_line
+	call VBE_print
+
 	pop eax
 	pop edi
 	ret
@@ -71,21 +57,21 @@ cmd_vbeinfo:
 
 	movzx eax, WORD [bl_vbe_width]
 	mov edi, num_str
-	call int_to_hex
+	call int_to_dec
 	call VBE_print
-	mov edi, new_line
+	mov edi, x_string
 	call VBE_print
 
 	movzx eax, WORD [bl_vbe_height]
 	mov edi, num_str
-	call int_to_hex
+	call int_to_dec
 	call VBE_print
-	mov edi, new_line
+	mov edi, x_string
 	call VBE_print
 
 	movzx eax, BYTE [bl_vbe_bpp]
 	mov edi, num_str
-	call int_to_hex
+	call int_to_dec
 	call VBE_print
 	mov edi, new_line
 	call VBE_print
@@ -174,15 +160,40 @@ cmd_cpuid:
 	popad
 	ret
 
+cmd_list:
+	push edi
+	push esi
+	push eax
+
+	mov esi, commands_string_array
+	mov eax, commands_count
+.cmd_list_loop:
+	mov edi, DWORD [esi]
+	call VBE_print
+	mov edi, new_line
+	call VBE_print
+
+	add esi, command_entry_size
+
+	dec eax
+	jnz	.cmd_list_loop
+
+	pop eax
+	pop esi
+	pop edi
+	ret
+
+
 command_entry_size equ 8
 ; has the commands supported by the shell
 ;  in a pair: command string and command function 
 commands_string_array:
-	dd page_cmd, cmd_page
-	dd time_cmd, cmd_time
-	dd vbeinfo_cmd, cmd_vbeinfo
-	dd cpuid_cmd, cmd_cpuid
-commands_count equ 4 ; (commands_string_array-$)/command_entry_size
+	dd time_cmd_string, cmd_time
+	dd vbeinfo_cmd_string, cmd_vbeinfo
+	dd cpuid_cmd_string, cmd_cpuid
+	dd list_cmd_string, cmd_list
+	dd clear_cmd_string, VBE_clear_screen
+commands_count equ ($-commands_string_array)/command_entry_size
 
 global keyboard_cmd
 keyboard_cmd:
@@ -238,11 +249,13 @@ keyboard_cmd:
 	ret
 
 
-cmd_arrow: db 10, "> ", 0
+cmd_arrow: db "> ", 0
+x_string: db "x", 0
 
-page_cmd: db "PAGE", 0
-time_cmd: db "TIME", 0
-vbeinfo_cmd: db "VBEINFO", 0
-cpuid_cmd: db "CPUID", 0
+time_cmd_string: db "TIME", 0
+vbeinfo_cmd_string: db "VBEINFO", 0
+cpuid_cmd_string: db "CPUID", 0
+list_cmd_string: db "LIST", 0
+clear_cmd_string: db "CLEAR", 0
 
 cpuid_invalid_instruction: db "NOT ABLE TO USE THE CPUID INSTRUCTION", 10, 0
