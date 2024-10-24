@@ -1,59 +1,67 @@
-; bootloader offset
+bits 16
 org 0x7C00
 
-; kernel offset
 KERNEL_OFFSET equ 0x1000
 
-bits 16
+mov BYTE [BOOT_DRIVE], dl
 
-; the BIOS sets up the boot driver in dl
-mov [BOOT_DRIVE], dl
-; set the stack
 mov bp, 0x9000
 mov sp, bp
 
-mov bx, MSG_REAL_MODE
-call putstr ; This will be written after the BIOS messages
-call print_nl
+
+mov di, BOOT_INIT_STR
+call putstr
+
+; activate the A20 line
+mov ax, 2401h
+int 15h
 
 ; this file initializes the screen using VBE
-%include "bootloader/init_VBE.asm"
+%include "bootloader/set_up_VBE.asm"
 
-call load_kernel ; load the kernel from disk
-call switch_to_pm ; disable interrupts, loads GDT
-jmp $ ; this will actually never be executed
 
+call load_kernel
+call switch_to_32bit_PM
+
+jmp $
 
 %include "bootloader/print_strings.asm"
 %include "bootloader/disk_read.asm"
-%include "bootloader/32bit_gdt.asm"
-%include "bootloader/print_string_32bit.asm"
-%include "bootloader/switch_to_32bit.asm"
+%include "bootloader/switch_to_32bit_PM.asm"
+%include "bootloader/32bit_GDT.asm"
+%include "bootloader/print_strings_32bit.asm"
 
 bits 16
 load_kernel:
-	mov bx, MSG_LOAD_KERNEL
-	call putstr
-	call print_nl
-
+	mov al, 40 ; REMEMBER: number of sectors to read
+	mov dl, BYTE [BOOT_DRIVE]
 	mov bx, KERNEL_OFFSET
-	mov dh, 40 ; REMEMBER: update this number if the os gets big, it is the number of sectors read (512 bytes)
-	mov dl, [BOOT_DRIVE]
 	call disk_load
+
+	mov di, KERNEL_LOADED_STR
+	call putstr
+
 	ret
 
 bits 32
-BEGIN_PM: ; after the switch we will get here
-    mov ebx, MSG_PROT_MODE
-    call print_string_pm ; this will be written at the top left corner
-    call KERNEL_OFFSET ; give control to kernel
-    jmp $ ; stay here when kernel returns control (if ever)
+execute_kernel:
+	call KERNEL_OFFSET
+	jmp $
 
-; store the drive number
-BOOT_DRIVE db 0
-MSG_REAL_MODE db "Started in 16bit RM", 0
-MSG_PROT_MODE db "Loaded 32bit PM", 0
-MSG_LOAD_KERNEL db "loading kernel", 0
+
+BOOT_DRIVE: db 0
+
+BOOT_INIT_STR db "16bit RM began", 10, 13, 0
+KERNEL_LOADED_STR db "kernel loaded", 10, 13, 0
+
+; Funciones del bootloader
+;X  activar la linea A20
+;  iniciar las VBE
+;  imprimir strings 32bit PM
+;X cargar el kernel
+;X  cargar el GDT de 32 bits
+;X  cambiar a PM de 32 bits
+;  ejecutar el kernel
 
 times 510-($-$$) db 0
 dw 0xAA55

@@ -84,8 +84,8 @@ elif os.name == 'posix':
     cmd(f'cat {bootloader}.bin {kernel}.bin > {output}')
 
 # create the virtual machine in qemu
-#cmd(f'qemu-system-x86_64 -fda {output}')
-cmd(f'qemu-system-i386 -drive file={output},format=raw,index=0,if=floppy')
+cmd(f'qemu-system-x86_64 -fda {output}')
+#cmd(f'qemu-system-i386 -drive file={output},format=raw,index=0,if=floppy')
 
 delete = "del" if os.name == 'nt' else "rm"
 # clean up intermediate files
