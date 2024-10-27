@@ -1,43 +1,27 @@
-org 0x7C00
 bits 16
+org 0x7C00
+
 
 ; prints a string to the screen
 ; Params:
-;  bx - pointer to the string
+;  di - pointer to the string
 putstr:
 	pusha
+    ; teletype print
+   	mov ah, 0x0e
 .putstr_loop:
-	mov al, [bx]
-	; check for null symbol
-	cmp al, 0
-	je .putstr_end
-
-	; print with the BIOS help
-	mov ah, 0x0e
+	mov al, BYTE [di]
 	int 10h
 
 	; next iteration
-	inc bx
-	jmp .putstr_loop
-.putstr_end:
+	inc di
+
+	cmp BYTE [di], 0
+    jne .putstr_loop
+
 	popa
 	ret
 
-; prints a new line
-print_nl:
-	mov al, 10
-	call putchr
-	mov al, 13
-	call putchr
-	ret
-
-; prints a symbol
-; Params:
-;  al - has the symbol to print
-putchr:
-	mov ah, 0Eh
-	int 10h
-	ret
 
 ; receiving the data in 'dx'
 ; For the examples we'll assume that we're called with dx=0x1234
@@ -65,7 +49,7 @@ hex_loop:
 step2:
     ; 2. get the correct position of the string to place our ASCII char
     ; bx <- base address + string length - index of char
-    mov bx, HEX_OUT + 5 ; base + length
+    mov bx, HEX_OUT + 4 ; base + length
     sub bx, cx  ; our index variable
     mov [bx], al ; copy the ASCII char on 'al' to the position pointed by 'bx'
     ror dx, 4 ; 0x1234 -> 0x4123 -> 0x3412 -> 0x2341 -> 0x1234
@@ -75,10 +59,10 @@ step2:
     jmp hex_loop
 
 end:
-    mov bx, HEX_OUT
+    mov di, HEX_OUT
     call putstr
 
     popa
     ret
 
-HEX_OUT: db '0x0000', 0
+HEX_OUT: db 'x0000', 0
